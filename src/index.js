@@ -16,6 +16,7 @@ const Accordion = createReactClass({
     easing: PropTypes.func,
     expanded: PropTypes.bool,
     header: PropTypes.element.isRequired,
+    containerHeight: PropTypes.number,
     onPress: PropTypes.func,
     underlayColor: PropTypes.string,
     style: PropTypes.object
@@ -39,6 +40,14 @@ const Accordion = createReactClass({
     }
   },
 
+  componentWillMount () {
+    this.getContentHeight(this.props.containerHeight)
+  },
+
+  componentWillReceiveProps (nextProps) {
+    this.getContentHeight(nextProps.containerHeight)
+  },
+
   close () {
     this.state.isVisible && this.toggle()
   },
@@ -49,32 +58,41 @@ const Accordion = createReactClass({
 
   toggle () {
     this.state.isVisible = !this.state.isVisible
-    Animated.timing(
-      this.state.height,
-      {
-        toValue: this.state.isVisible ? this.state.contentHeight : 0,
-        duration: this.props.animationDuration,
-        easing: this.props.easing
-      }
-    ).start()
+    // Animated.timing(
+    //   this.state.height,
+    //   {
+    //     toValue: this.state.isVisible ? this.state.contentHeight : 0,
+    //     duration: this.props.animationDuration,
+    //     easing: this.props.easing
+    //   }
+    // ).start()
+    this.setState({
+      height: this.state.isVisible ? this.state.contentHeight : 0
+    })
   },
 
   _onPress () {
     this.toggle()
-
     if (this.props.onPress) {
       this.props.onPress.call(this)
     }
   },
 
-  getContentHeight (event) {
-    const height = event.nativeEvent.layout.height
+  getContentHeight (value) {
+    const height = value
     if (this.state.contentHeight === 0) {
       this.setState({
         contentHeight: height
       })
-      this.state.height = new Animated.Value(0)
-      this.state.height.setValue(this.props.expanded ? height : 0)
+      // this.state.height = new Animated.Value(0)
+      // this.state.height.setValue(this.props.expanded ? height : 0)
+      this.setState({
+        height: this.props.expanded ? height : 0
+      })
+    } else if (this.state.contentHeight !== height) {
+      this.setState({
+        height
+      })
     }
   },
 
@@ -93,9 +111,9 @@ const Accordion = createReactClass({
         >
           {this.props.header}
         </TouchableHighlight>
-        <Animated.View
+        <View
           ref='AccordionContentWrapper'
-          onLayout={(event) => this.getContentHeight(event)}
+          onLayout={(event) => this.getContentHeight(event.nativeEvent.layout.height)}
           style={{
             height: this.state.height
           }}
@@ -103,7 +121,7 @@ const Accordion = createReactClass({
           <View ref='AccordionContent'>
             {this.props.content}
           </View>
-        </Animated.View>
+        </View>
       </View>
     )
   }
